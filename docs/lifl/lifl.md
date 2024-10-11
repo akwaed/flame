@@ -43,10 +43,12 @@ golangci-lint --version # Verify that GolangCI-Lint was installed
 We recommend setting up your environment with `conda`. Within the cloned flame directory, run the following to activate and setup the flame environment:
 
 ```bash
-cd /mydata/flame # && git checkout duplicate-clients
+cd flame 
 make install # Install flame control plane utilities
 # Run within the cloned flame directory
-cd lib/python/flame
+cd lib/python
+make install
+
 conda create -n flame python=3.9
 conda activate flame
 
@@ -54,9 +56,6 @@ pip install google
 pip install tensorflow
 pip install torch
 pip install torchvision
-
-cd ..
-make install
 
 ```
 
