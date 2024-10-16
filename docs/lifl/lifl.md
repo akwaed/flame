@@ -53,9 +53,7 @@ We recommend setting up your environment with `conda`. Within the cloned flame d
 cd flame 
 make install # Install flame control plane utilities
 # Run within the cloned flame directory
-cd lib/python
-make install
-
+cd lib/python/flame
 conda create -n flame python=3.9
 conda activate flame
 
@@ -63,6 +61,9 @@ pip install google
 pip install tensorflow
 pip install torch
 pip install torchvision
+
+cd ..
+make install
 
 ```
 
@@ -129,7 +130,7 @@ Flame initially supports lazy aggregation only. LIFL adds additional support for
 
 ## Running an Example
 
-We will run the [coord_hier_syncfl_mnist](../../lib/python/examples/coord_hier_syncfl_mnist/) example 
+We will run the [coord_hier_syncfl_mnist](../../lib/python/examples/coord_hier_syncfl_mnist/) example
 
 Open six terminal windows.
 
@@ -181,7 +182,7 @@ python main.py configs/config_shm_1.json
 Run the Trainer 
 
 ```bash
-cd /mydata/flame/lib/python/examples/coord_hier_syncfl_mnist/trainer
+cd flame/lib/python/examples/coord_hier_syncfl_mnist/trainer
 
 conda activate flame
 python main.py config1.json 
@@ -211,7 +212,7 @@ sudo ln -sf /lib/x86_64-linux-gnu/libbpf.so.0.6.0 /lib/x86_64-linux-gnu/libbpf.s
 ### 2. When runining the trainer, you receive 
 
 ```text
- File "/mydata/miniconda3/envs/flame/lib/python3.9/site-packages/pip/_vendor/typing_extensions.py", line 3019, in _collect_type_vars
+ File "miniconda3/envs/flame/lib/python3.9/site-packages/pip/_vendor/typing_extensions.py", line 3019, in _collect_type_vars
     raise TypeError(f'Type parameter {t!r} without a default'
 TypeError: Type parameter +T without a default follows type parameter with a default
 ```

@@ -158,4 +158,4 @@ sudo systemctl stop mosquitto
 sudo systemctl restart mosquitto
 ```
 
-Tutorial on how to run an example can be found in [lifl example](docs/lifl/lifl.md#Running an Example)
+Tutorial on how to run an example can be found in [lifl example](./lifl.md#running-an-example)
