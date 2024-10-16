@@ -1,6 +1,6 @@
 # LIFL Instructions
 
-This document provides instructions on how to use LIFL in flame.
+This document provides instructions on how to use LIFL in flame. In case you are installing on a mounted drive refer to the following documentation: [LIFL on expternal drive](./lifl_ext.md)
 
 ## Prerequisites
 The target runtime environment of LIFL is Linux **only**. LIFL requires Linux kernel version >= 5.15. We have tested LIFL on Ubuntu 20.
@@ -27,6 +27,13 @@ sudo apt update && sudo apt install -y flex bison build-essential dwarves libssl
 cd third_party/spright_utility/scripts
 ./libbpf.sh
 ```
+Finally, install sockmap_manager files
+
+```bash
+cd flame/third_party/spright_utility/
+make all
+```
+
 ### 3.  installing Go and GolangCI-Lint
 
 ```bash
@@ -151,7 +158,7 @@ Run the cordinator
 cd flame/lib/python/examples/coord_hier_syncfl_mnist/coordinator
 
 conda activate flame
-python python main.py config.json 
+python main.py config.json 
 ```
 
 Run the Top Aggregator
@@ -182,12 +189,15 @@ python main.py config1.json
 ```
 
 ## Problems when running LIFL
-1. When you run `sudo ./bin/sockmap_manager`, you receive 
-```
+
+### 1. When you run `sudo ./bin/sockmap_manager`, you receive
+
+```text
 ./bin/sockmap_manager: error while loading shared libraries: libbpf.so.0: cannot open shared object file: No such file or directory
 ```
 
 Solutions: This may happen when you use Ubuntu 22, which has the libbpf 0.5.0 pre-installed. You need to re-link the `/lib/x86_64-linux-gnu/libbpf.so.0` to `libbpf.so.0.6.0`
+
 ```bash
 # Assume you have executed the libbpf installation script
 cd third_party/spright_utility/scripts/libbpf/src
@@ -198,16 +208,19 @@ sudo cp libbpf.so.0.6.0 /lib/x86_64-linux-gnu/
 # Re-link libbpf.so.0
 sudo ln -sf /lib/x86_64-linux-gnu/libbpf.so.0.6.0 /lib/x86_64-linux-gnu/libbpf.so.0
 ```
-2. When runining the trainer, you receive 
-```
+
+### 2. When runining the trainer, you receive 
+
+```text
  File "/mydata/miniconda3/envs/flame/lib/python3.9/site-packages/pip/_vendor/typing_extensions.py", line 3019, in _collect_type_vars
     raise TypeError(f'Type parameter {t!r} without a default'
 TypeError: Type parameter +T without a default follows type parameter with a default
 ```
+
 Solution: You should be able to solve this error by downgrading pip
 
 ```bash
-pip == 24pip install pip==24.1.2
+pip install pip==24.1.2
 
 conda activate flame
 python main.py config1.json 
