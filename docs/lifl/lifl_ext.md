@@ -29,13 +29,13 @@ cd /mydata
 export MYMOUNT=/mydata
 ```
 
-### 2. JInstall Golang on the Mounted Drive
+### 2. Install Golang on the Mounted Drive
 
 Download and extract the latest version of Golang:
 
 ```bash
 golang_file=go1.22.3.linux-amd64.tar.gz
-curl -LO <https://go.dev/dl/$golang_file> && tar -C /mydata -xzf $golang_file
+curl -LO https://go.dev/dl/$golang_file && tar -C /mydata -xzf $golang_file
 ```
 
 Update the system's PATH:
