@@ -187,62 +187,69 @@ class LIFLSharedMemoryBackend(AbstractBackend):
             raise SystemError("_create_join_inner_task failure")
     
     def leave(self, channel) -> None:
-        """Leave a given channel."""
         logger.info("Clean up shared memory buffers.")
-    
+
+        # 1. Clean up per-end buffers
         for end in channel.all_ends():
+            if shared_memory_exists(end):
+                try:
+                    shm_buf = shared_memory.SharedMemory(name=end)
+                    shm_buf.close()
+                    if end == self._id:
+                        try:
+                            shm_buf.unlink()
+                            unregister(end, "shared_memory")
+                        except FileNotFoundError:
+                            logger.debug(f"Shared memory {end} already unlinked by another process.")
+                except FileNotFoundError:
+                    logger.debug(f"Shared memory segment {end} not found during cleanup.")
+            else:
+                logger.debug(f"Shared memory {end} does not exist, skipping.")
+
+        # 2. Clean up our role-specific dictionary
+        my_shm_name = channel.name() + "-" + channel.my_role()
+        if shared_memory_exists(my_shm_name):
             try:
-                shm_buf = shared_memory.SharedMemory(name=end)
-                # Close the shared memory segment
-                shm_buf.close()
-                # If this end belongs to us, we created it, so we can unlink it
-                if end == self._id:
+                my_shm_ends = SharedMemoryDict(name=my_shm_name, size=SHM_DICT_SIZE)
+                if self._id in my_shm_ends:
+                    del my_shm_ends[self._id]
+
+                if len(my_shm_ends) == 0:
+                    my_shm_ends.shm.close()
+                    try:
+                        my_shm_ends.shm.unlink()
+                        unregister(my_shm_name, "shared_memory")
+                    except FileNotFoundError:
+                        logger.debug(f"Shared memory dict {my_shm_name} already unlinked.")
+                else:
+                    my_shm_ends.shm.close()
+            except FileNotFoundError:
+                logger.debug(f"No shared memory dict found for {my_shm_name}")
+        else:
+            logger.debug(f"{my_shm_name} does not exist, skipping.")
+
+        # 3. Clean up all segments created in set_data()
+        #    These have names like self._id + "-" + other
+        #    Ensure we only unlink if this process created them.
+        for key in list(self._is_shm_buf_created.keys()):
+            # key is of the form self._id + "-" + other
+            if shared_memory_exists(key):
+                try:
+                    shm_buf = shared_memory.SharedMemory(name=key)
+                    shm_buf.close()
+                    # As the creator (since we track them in _is_shm_buf_created),
+                    # we can safely unlink here
                     try:
                         shm_buf.unlink()
+                        unregister(key, "shared_memory")
                     except FileNotFoundError:
-                        logger.debug(f"Shared memory segment {end} already unlinked.")
-            except FileNotFoundError:
-                logger.debug(f"Shared memory segment {end} not found during cleanup (already removed?).")
-    
-        # Clean up the local ends dictionary
-        shm_ends_name = channel.name() + "-" + channel.my_role()
-        try:
-            shm_ends = SharedMemoryDict(name=shm_ends_name, size=SHM_DICT_SIZE)
-            # Remove our entry
-            if self._id in shm_ends:
-                del shm_ends[self._id]
-    
-            if len(shm_ends) == 0:
-                shm_ends.shm.close()
-                try:
-                    shm_ends.shm.unlink()
+                        logger.debug(f"Shared memory {key} already unlinked by another process.")
                 except FileNotFoundError:
-                    logger.debug(f"Shared memory dict {shm_ends_name} already unlinked.")
-                del shm_ends
+                    logger.debug(f"Shared memory segment {key} not found during cleanup.")
             else:
-                # Just close shm but do not unlink if entries remain
-                shm_ends.shm.close()
-        except FileNotFoundError:
-            logger.debug(f"No shared memory dict found for {shm_ends_name}; may have been unlinked already.")
-    
-        # Clean up the peer ends dictionary
-        other_ends_name = channel.name() + "-" + channel.other_role()
-        try:
-            other_ends = SharedMemoryDict(name=other_ends_name, size=SHM_DICT_SIZE)
-            other_ends.shm.close()
-            # We don't unlink here unless we know we're the last one since
-            # this dictionary may still be needed by other participants
-            # If you have logic to determine you are the final owner, add unlink here.
-            #
-            # If you do want to attempt unlink:
-            # try:
-            #     other_ends.shm.unlink()
-            # except FileNotFoundError:
-            #     logger.debug(f"Shared memory dict {other_ends_name} already unlinked.")
-    
-        except FileNotFoundError:
-            logger.debug(f"No shared memory dict found for {other_ends_name}; may have been unlinked already.")
-    
+                logger.debug(f"Shared memory {key} does not exist, skipping.")
+        self._is_shm_buf_created.clear()
+
         logger.debug("channel leave completed gracefully")
 
     # def leave(self, channel) -> None:
